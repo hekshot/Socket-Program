@@ -58,6 +58,7 @@ public class SimpleClient {
             }
 
             // Close the PrintWriter out and the Socket
+            //nothin changed
             out.close();
             socket.close();
         } catch (IOException e) {
