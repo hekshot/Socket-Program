@@ -14,14 +14,17 @@ public class SimpleClient {
         String serverAddress = args[0];
         int serverPort = Integer.parseInt(args[1]);
 
+        Socket socket = null;
+        PrintWriter out = null;
+
         try {
             // Connect to the server
-            Socket socket = new Socket(serverAddress, serverPort);
+            socket = new Socket(serverAddress, serverPort);
             System.out.println("Connected to server: " + serverAddress);
 
             // Create input and output streams for communication
             BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-            PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
+            out = new PrintWriter(socket.getOutputStream(), true);
 
             // Start a separate thread to read messages from the server
             new Thread(() -> {
@@ -29,7 +32,7 @@ public class SimpleClient {
                     String response;
                     while ((response = in.readLine()) != null) {
                         System.out.println("Server message: " + response);
-                        if (response.equalsIgnoreCase("Server: Goodbye, client!")) {
+                        if (response.equalsIgnoreCase("Goodbye, client!")) {
                             break;
                         }
                     }
@@ -56,13 +59,17 @@ public class SimpleClient {
                     break;
                 }
             }
-
-            // Close the PrintWriter out and the Socket
-            //nothin changed
-            out.close();
-            socket.close();
         } catch (IOException e) {
             e.printStackTrace();
+        } finally {
+            try {
+                // Close the PrintWriter, Socket will be closed when exiting
+                if (out != null) {
+                    out.close();
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
     }
 }

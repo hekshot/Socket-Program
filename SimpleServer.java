@@ -14,9 +14,11 @@ public class SimpleServer {
 
         int portNumber = Integer.parseInt(args[0]);
 
+        ServerSocket serverSocket = null;
+
         try {
             // Create a server socket
-            ServerSocket serverSocket = new ServerSocket(portNumber);
+            serverSocket = new ServerSocket(portNumber);
             System.out.println("Server is listening on port " + portNumber);
 
             // Wait for a client to connect
@@ -35,6 +37,15 @@ public class SimpleServer {
 
         } catch (IOException e) {
             e.printStackTrace();
+        } finally {
+            // Close the server socket in the finally block
+            if (serverSocket != null && !serverSocket.isClosed()) {
+                try {
+                    serverSocket.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
         }
     }
 
@@ -51,7 +62,8 @@ public class SimpleServer {
                 }
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            // Handle client disconnect gracefully
+            System.out.println("Client disconnected.........");
         }
     }
 
