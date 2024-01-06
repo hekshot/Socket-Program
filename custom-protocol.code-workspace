@@ -1,0 +1,14 @@
+{
+	"folders": [
+		{
+			"path": "../itj_workspace/custom-protocol"
+		},
+		{
+			"path": "../itj_workspace/socket"
+		},
+		{
+			"path": "."
+		}
+	],
+	"settings": {}
+}

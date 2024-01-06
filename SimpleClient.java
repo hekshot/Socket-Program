@@ -31,7 +31,7 @@ public class SimpleClient {
                 try {
                     String response;
                     while ((response = in.readLine()) != null) {
-                        System.out.println("Server message: " + response);
+                        System.out.println(response);
                         if (response.equalsIgnoreCase("Goodbye, client!")) {
                             break;
                         }
