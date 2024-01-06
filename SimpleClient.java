@@ -1,15 +1,8 @@
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.net.Socket;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
-import java.util.Base64;
-
-import javax.crypto.BadPaddingException;
-import javax.crypto.Cipher;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.NoSuchPaddingException;
-import javax.crypto.SecretKey;
-import javax.crypto.spec.SecretKeySpec;
 
 public class SimpleClient {
     public static void main(String[] args) {
@@ -25,19 +18,15 @@ public class SimpleClient {
         PrintWriter out = null;
 
         try {
+            // Connect to the server
             socket = new Socket(serverAddress, serverPort);
             System.out.println("Connected to server: " + serverAddress);
 
+            // Create input and output streams for communication
             BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             out = new PrintWriter(socket.getOutputStream(), true);
 
-            String encodedKey = in.readLine();
-            byte[] keyBytes = Base64.getDecoder().decode(encodedKey);
-            SecretKey secretKey = new SecretKeySpec(keyBytes, "RC4");
-
-            Cipher rc4Cipher = Cipher.getInstance("RC4");
-            rc4Cipher.init(Cipher.ENCRYPT_MODE, secretKey);
-
+            // Start a separate thread to read messages from the server
             new Thread(() -> {
                 try {
                     String response;
@@ -51,6 +40,7 @@ public class SimpleClient {
                     e.printStackTrace();
                 } finally {
                     try {
+                        // Close only the BufferedReader in this block
                         in.close();
                     } catch (IOException e) {
                         e.printStackTrace();
@@ -58,19 +48,22 @@ public class SimpleClient {
                 }
             }).start();
 
+            // Read messages from the user and send to the server
             BufferedReader userInput = new BufferedReader(new InputStreamReader(System.in));
             String message;
             while ((message = userInput.readLine()) != null) {
-                out.println(encryptMessage(message, rc4Cipher));
+                out.println(message);
 
+                // Break the loop if the user types "bye"
                 if (message.equalsIgnoreCase("bye")) {
                     break;
                 }
             }
-        } catch (IOException | NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException e) {
+        } catch (IOException e) {
             e.printStackTrace();
         } finally {
             try {
+                // Close the PrintWriter, Socket will be closed when exiting
                 if (out != null) {
                     out.close();
                 }
@@ -78,26 +71,5 @@ public class SimpleClient {
                 e.printStackTrace();
             }
         }
-    }
-
-    private static String encryptMessage(String message, Cipher cipher) throws IOException {
-        try {
-            byte[] encryptedBytes = cipher.doFinal(message.getBytes());
-            return Base64.getEncoder().encodeToString(encryptedBytes);
-        } catch (IllegalBlockSizeException | BadPaddingException e) {
-            throw new IOException("Error encrypting message", e);
-        }
-
-    }
-
-    private static String decryptMessage(String encryptedMessage, Cipher cipher) throws IOException {
-        try {
-            byte[] decodedBytes = Base64.getDecoder().decode(encryptedMessage);
-            byte[] decryptedBytes = cipher.doFinal(decodedBytes);
-            return new String(decryptedBytes);
-        } catch (IllegalBlockSizeException | BadPaddingException e) {
-            throw new IOException("Error decrypting message", e);
-        }
-
     }
 }
