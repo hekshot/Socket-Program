@@ -17,65 +17,55 @@ public class SimpleServer {
 
         int portNumber = Integer.parseInt(args[0]);
 
-        ServerSocket serverSocket = null;
-
-        try {
-            // Create a server socket
-            serverSocket = new ServerSocket(portNumber);
+        try (ServerSocket serverSocket = new ServerSocket(portNumber)) {
             System.out.println("Server is listening on port " + portNumber);
 
-            // Wait for a client to connect
-            Socket clientSocket = serverSocket.accept();
-            System.out.println("Client connected: " + clientSocket.getInetAddress());
-
-            // Create input and output streams for communication
-            BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-            PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
-
-            // Handle client messages and initial options
-            new Thread(() -> handleClientMessages(in, out)).start();
-
-            // Start a separate thread to handle messages from the server console
-            new Thread(() -> handleServerConsoleInput(out)).start();
-
+            while (true) {
+                // Wait for a client to connect
+                Socket clientSocket = serverSocket.accept();
+                System.out.println("Client connected: " + clientSocket.getInetAddress());
+    
+                // Create input and output streams for communication
+                BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+                PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
+    
+                // Reset chatMode when a new client connects
+                chatMode = false;
+    
+                // Handle client messages and initial options in a separate thread
+                new Thread(() -> handleClientMessages(in, out)).start(); 
+                new Thread(() -> handleServerConsoleInput(out)).start();
+            }
         } catch (IOException e) {
             System.err.println("Error setting up the server: " + e.getMessage());
-        } finally {
-            // Close the server socket in the finally block
-            if (serverSocket != null && !serverSocket.isClosed()) {
-                try {
-                    serverSocket.close();
-                } catch (IOException e) {
-                    System.err.println("Error closing the server socket: " + e.getMessage());
-                }
-            }
         }
     }
+
 
     private static void handleClientMessages(BufferedReader in, PrintWriter out) {
         try {
             while (true) {
                 // Send initial options to the client
                 out.println("Welcome to the server! Choose an option: /CHAT or /CALC");
-
+    
                 // Read the client's choice
                 String choice = in.readLine();
-
+    
                 // Process the client's choice
                 if (choice != null) {
                     if (choice.equalsIgnoreCase("/CHAT")) {
                         // Set the chatMode to true
                         chatMode = true;
                         out.println("Chat mode activated. Type '/EXIT' to exit chat mode.");
-
+    
                         // Process chat messages
                         processChatMessages(in, out);
                     } else if (choice.equalsIgnoreCase("/CALC")) {
                         // Set the chatMode to false
                         chatMode = false;
                         out.println(
-                                "Calculator mode activated. You can now perform calculations. Type '/EXIT' to exit.");
-
+                                "Calculator mode activated. You can now perform calculations. Type '/EXIT' to exit and '/HELP' for help.");
+    
                         // Process calculator messages
                         processCalcMessages(in, out);
                     } else if (choice.equalsIgnoreCase("bye")) {
@@ -84,20 +74,22 @@ public class SimpleServer {
                     } else {
                         // Invalid choice, notify the client
                         out.println("Invalid choice. Please choose /CHAT or /CALC");
-                        return;
                     }
                 } else {
                     // Client disconnected before making a choice
                     System.out.println("Client disconnected.........");
-                    return;
+                    break;
                 }
             }
         } catch (IOException e) {
             // Handle client disconnect
-            System.err.println("Error handling client messages: " + e.getMessage());
+            if (e.getMessage() != null && e.getMessage().equalsIgnoreCase("Socket closed")) {
+                System.out.println("Client disconnected.........");
+            } else {
+                System.err.println("Error handling client messages: " + e.getMessage());
+            }
         }
     }
-
     private static void processChatMessages(BufferedReader in, PrintWriter out) throws IOException {
         String message;
         while ((message = in.readLine()) != null) {

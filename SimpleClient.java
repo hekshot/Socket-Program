@@ -32,7 +32,7 @@ public class SimpleClient {
                     String response;
                     while ((response = in.readLine()) != null) {
                         System.out.println(response);
-                        if (response.equalsIgnoreCase("Goodbye, client!")) {
+                        if (response.equalsIgnoreCase("Goodbye!")) {
                             break;
                         }
                     }
@@ -55,9 +55,9 @@ public class SimpleClient {
                 out.println(message);
 
                 // Break the loop if the user types "bye"
-                if (message.equalsIgnoreCase("bye")) {
-                    break;
-                }
+                // if (message.equalsIgnoreCase("bye")) {
+                //     break;
+                // }
             }
         } catch (IOException e) {
             e.printStackTrace();
